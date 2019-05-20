@@ -1,0 +1,41 @@
+@import (reference) './color.less';
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+  font-family: 'Yapi SC', 'Yuanti SC', 'Microsoft Yahei', 'Times New Roman',
+    Times, serif;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  color: @color-dim;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+ul,
+ol,
+li {
+  list-style-type: none;
+}
+
+a {
+  background-color: transparent;
+}
+
+input,
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: none;
+  outline: none;
+}

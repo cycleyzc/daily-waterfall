@@ -1,0 +1,14 @@
+{
+  "name": "daily-waterfall",
+  "short_name": "daily-waterfall",
+  "icons": [
+    {
+      "src": "./img/cycle_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff"
+}
