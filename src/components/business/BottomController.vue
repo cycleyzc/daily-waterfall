@@ -31,6 +31,10 @@
       <!-- <i class="fas fa-plus-circle like-btn feature-icon icon-add-book"></i> -->
       <i class="fas fa-plus-square like-btn feature-icon icon-add"
          @click="onIconAddAction"></i>
+      <i class="fas fa-filter like-btn feature-icon icon-filter"
+         @click="onIconFilterAction"></i>
+      <i class="fas fa-sync like-btn feature-icon icon-sync"
+         @click="onIconSyncAction"></i>
       <!-- <i class="fas fa-edit like-btn feature-icon icon-add-book"></i> -->
       <!-- <i class="fas fa-pen-square like-btn feature-icon icon-edit"></i> -->
       <!-- <i class="fas fa-pencil-alt like-btn feature-icon icon-add-book"></i> -->
@@ -67,6 +71,12 @@ export default {
     },
     onIconAddAction() {
       this.$emit('onIconAddAction')
+    },
+    onIconFilterAction() {
+      this.$emit('onIconFilterAction')
+    },
+    onIconSyncAction() {
+      this.$emit('onIconSyncAction')
     }
   }
 }

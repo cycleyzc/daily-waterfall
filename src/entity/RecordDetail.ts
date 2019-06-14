@@ -10,6 +10,16 @@ interface RecordDetailField {
   income: number
   expense: number
   parentID: number
+  year?: number
+  month?: number
+  day?: number
+}
+
+interface QueryCon {
+  parentID: string
+  year?: any
+  month?: any
+  [key: string]: any
 }
 
 class RecordDetail extends Dexie {
@@ -18,7 +28,8 @@ class RecordDetail extends Dexie {
   constructor () {
     super('RecordDetail')
     this.version(1).stores({
-      detail: '++id, name, note, timestamp, category, income, expense, parentID'
+      detail:
+        '++id, name, note, timestamp, category, income, expense, parentID, year, month, day'
     })
     this.recordDetail = this.table('detail')
   }
@@ -46,6 +57,10 @@ class RecordDetail extends Dexie {
       parentID,
       timestamp
     }
+    const itemDate = new Date(item.timestamp)
+    item.year = itemDate.getFullYear()
+    item.month = itemDate.getMonth() + 1
+    item.day = itemDate.getDate()
     const id = await this.recordDetail.add(item)
     const count = await this.recordDetail
       .where({ parentID: String(parentID) })
@@ -60,11 +75,14 @@ class RecordDetail extends Dexie {
   /**
    * 根据账本id查询所有条目
    * @param parentID 账本id
+   * @param date 日期对象, exp: {year: '', month: ''}
    */
-  public async queryAllByNotebook (parentID: number): Promise<any> {
-    const data = await this.recordDetail
-      .where({ parentID: String(parentID) })
-      .toArray()
+  public async queryAllByNotebook (parentID: number, date?: any): Promise<any> {
+    let query: QueryCon = { parentID: '' }
+    query.parentID = String(parentID)
+    date.hasOwnProperty('year') ? (query.year = date.year) : null
+    date.hasOwnProperty('month') ? (query.month = date.month) : null
+    const data = await this.recordDetail.where(query).toArray()
     return data
   }
 
@@ -74,7 +92,15 @@ class RecordDetail extends Dexie {
    * @param item 需要修改的字段
    */
   public async updateField (id: number, item: any): Promise<any> {
+    // 因为新加了字段, 为旧版本数据更新新字段的值
+    if (item.hasOwnProperty('timestamp')) {
+      const itemDate = new Date(item.timestamp)
+      item.year = itemDate.getFullYear()
+      item.month = itemDate.getMonth() + 1
+      item.day = itemDate.getDate()
+    }
     const data = await this.recordDetail.update(id, item)
+    console.log('updateField', id, item, data)
     if (data) {
       return true
     } else {
@@ -111,6 +137,16 @@ class RecordDetail extends Dexie {
       return result
     } else {
       return null
+    }
+  }
+
+  public async syncField () {
+    const data = await this.recordDetail.toArray()
+    for (let i = 0; i < data.length; i++) {
+      // 更新新加的年月日字段
+      if (!data[i].hasOwnProperty('year') || !data[i].year) {
+        const result = await this.updateField(data[i].id, data[i])
+      }
     }
   }
 }

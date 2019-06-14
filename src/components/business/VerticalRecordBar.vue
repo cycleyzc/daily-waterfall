@@ -53,11 +53,17 @@ export default {
     index: {
       type: [Number],
       required: true
+    },
+    back: {
+      type: Boolean,
+      default() {
+        return false
+      }
     }
   },
   data() {
     return {
-      showDetail: true
+      showDetail: !this.back
     }
   },
   components: {

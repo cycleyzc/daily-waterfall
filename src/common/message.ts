@@ -4,7 +4,8 @@ export enum MSG_TEMPLATE {
   DEL_BOOK_S = '账本:${bookName}已删除',
   DEL_BOOK_F = '账本:${bookName}删除失败',
   NEW_BOOK_S = '成功新增账本:${bookName}',
-  NEW_BOOK_F = '新增账本失败'
+  NEW_BOOK_F = '新增账本失败',
+  SYNC_S = '同步字段成功'
 }
 
 /**

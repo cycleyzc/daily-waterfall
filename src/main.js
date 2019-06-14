@@ -26,6 +26,9 @@ Vue.component('v-select', vSelect)
 Vue.component('v-date-picker', vDatePicker)
 Vue.config.productionTip = false
 
+Vue.prototype.__TRUTH__ = true
+Vue.prototype.__FAKE__ = false
+
 new Vue({
   router,
   render: h => h(App)

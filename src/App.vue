@@ -1,12 +1,26 @@
 <template>
   <div id="app">
-    <router-view class="content" />
+    <div class="condition-title"
+         v-if="title">
+      <span class="ft-xl">{{title}}</span>
+    </div>
+    <router-view class="content"
+                 @onChangeTitle="_changeTitle" />
   </div>
 </template>
 
 <script>
 export default {
-
+  data() {
+    return {
+      title: `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`
+    }
+  },
+  methods: {
+    _changeTitle(title) {
+      this.title = title
+    }
+  }
 }
 </script>
 
@@ -18,14 +32,20 @@ export default {
   height: 100vh;
   background-color: @color-soft;
 }
-// .content {
-//   position: fixed;
-//   top: 50%;
-//   left: 50%;
-//   display: block;
-//   width: @content-width;
-//   height: @content-height;
-//   background-color: @color-day;
-//   transform: translate(-50%, -50%);
-// }
+
+.condition-title {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    color: @color-night;
+    // padding: 10px 40px;
+    // border: 1px solid @color-night;
+  }
+}
 </style>

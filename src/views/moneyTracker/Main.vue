@@ -1,18 +1,27 @@
 <template>
   <div class="view-money-tracker">
     <div class="router-view">
-      <router-view ref="childrenView"></router-view>
+      <router-view ref="childrenView"
+                   :key="reloadDate"></router-view>
     </div>
     <div>
       <mt-controller :book="currentBook"
                      :show="controllerVisibility"
                      @onToggleRoute="_toggleRoute"
-                     @onBookListAction="_showBookList"
-                     @onIconAddAction="toAddBook"></mt-controller>
+                     @onBookListAction="_toggleBookList(true)"
+                     @onIconAddAction="toAddBook"
+                     @onIconFilterAction="_toggleFilterOptions(true)"
+                     @onIconSyncAction="_syncDB"></mt-controller>
     </div>
     <div class="invisible-mask"
-         v-if="compVisibility.bookList">
-      <div :class="['placeholder', hideAnimation]"
+         v-show="compVisibility.bookList || compVisibility.itemFilter">
+      <div :class="[hideAnimationLeft]"></div>
+      <Filter-condition v-show="compVisibility.itemFilter"
+                        :old-condition="oldFilterCon"
+                        @onItemFilterUndo="_undoItemFilterCondition"
+                        @onItemFilterConfirm="_confirmItemFilterCondition"
+                        ref="itemFilter"></Filter-condition>
+      <div :class="['placeholder', hideAnimationRight]"
            @click.self="hideMask"></div>
       <div class="book-list-container"
            v-show="compVisibility.bookList">
@@ -35,6 +44,7 @@
           </li>
         </ul>
       </div>
+
     </div>
     <App-mask v-if="showAppMask">
       <Book-info-form slot="slot"
@@ -53,22 +63,30 @@ import VueNotifications from 'vue-notifications'
 import mtController from '@/components/business/BottomController'
 import AppMask from '@/components/public/mask/Mask'
 import BookInfoForm from '@/components/business/BookInfoForm'
+import FilterCondition from '@/components/business/ItemFilterCondition'
 
 import Notebook from '@/entity/Notebook.ts'
+import RecordDetail from '@/entity/RecordDetail.ts'
 
 import { fn } from '@/views/initFnMap.ts'
 import { MSG_TEMPLATE, renderSentence } from '@/common/message.ts'
+import { itemCategories } from '@/constants/category.ts'
+import { itemFilterDesc } from '@/constants/string.ts'
+import { DEFAULT_ENCODING } from 'crypto';
 
 const _notebook = new Notebook()
+const _recordDetail = new RecordDetail()
 
 export default {
   components: {
     mtController,
     AppMask,
-    BookInfoForm
+    BookInfoForm,
+    FilterCondition
   },
   data() {
     return {
+      reloadDate: Date.now(),
       currentBook: {},
       books: [],
       controllerVisibility: {
@@ -79,11 +97,18 @@ export default {
       },
       compVisibility: {
         bookList: false,
-        bookInfoForm: false
+        bookInfoForm: false,
+        itemFilter: false
       },
-      hideAnimation: '',
+      hideAnimationLeft: '',
+      hideAnimationRight: '',
       selectedBookID: localStorage.getItem('NOTEBOOK_ID') || -1,
-      oldBook: {}
+      oldBook: {},
+      oldFilterCon: {
+
+      },
+      itemCategories: Object.values(itemCategories),
+      itemFilterDesc: itemFilterDesc
     }
   },
   computed: {
@@ -97,7 +122,8 @@ export default {
     toastBookS: {
       type: VueNotifications.types.success,
       title: '',
-      message: ''
+      message: '',
+      cb: function () { }
     },
     toastBookE: {
       type: VueNotifications.types.error,
@@ -115,6 +141,9 @@ export default {
     this.getBooks()
   },
   methods: {
+    reload() {
+      this.reloadDate = Date.now()
+    },
     // 获取全部账本
     getBooks() {
       _notebook.queryAll()
@@ -137,16 +166,22 @@ export default {
           }
         })
     },
-    hideMask() {
-      this.hideAnimation = 'hide-mask'
+    hideMask(clear = true) {
+      this.hideAnimationLeft = 'hide-mask-left'
+      this.hideAnimationRight = 'hide-mask-right'
       setTimeout(() => {
-        this.compVisibility.bookList = false
-        this.hideAnimation = ''
+        this._toggleBookList(false)
+        this._toggleFilterOptions(false)
+        this.hideAnimationLeft = ''
+        this.hideAnimationRight = ''
+        clear ? this.$refs.itemFilter.clearData() : null
       }, 300)
     },
     // 切换账本
     switchBook(item) {
       // console.log('router', this.$route, item)
+      let title = `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`
+      this.$emit('onChangeTitle', title)
       localStorage.setItem('NOTEBOOK_ID', item.id)
       this.selectedBookID = item.id
       this.currentBook = item
@@ -199,10 +234,9 @@ export default {
           break
       }
     },
-    _showBookList() {
-      this.compVisibility.bookList = true
+    _toggleBookList(bool) {
+      this.compVisibility.bookList = bool
     },
-
     // 新增账本
     _confirmAddNewBook({ type, name }) {
       console.log('_confirmAddNewBook', type, name)
@@ -224,6 +258,49 @@ export default {
           location.reload()
         }, err => {
           console.warn('_confirmUpadteBook', err)
+        })
+    },
+    _toggleFilterOptions(bool) {
+      this.compVisibility.itemFilter = bool
+    },
+    _confirmItemFilterCondition(condition) {
+      this.oldFilterCon = condition
+      switch (condition.key) {
+        case this.itemFilterDesc.COM:
+          this.$refs.childrenView.combineRecords(condition)
+          break
+        case this.itemFilterDesc.FIL:
+          this.$refs.childrenView.filterRecords(condition)
+          break
+      }
+
+      let title = ''
+      if (condition.values.hasOwnProperty('year')) {
+        title = `${condition.key}: ${new Date(condition.values.year).getFullYear()}年`
+      } else if (condition.values.hasOwnProperty('month')) {
+        const date = new Date(condition.values.month)
+        title = `${condition.key}: ${date.getFullYear()}年${date.getMonth() + 1}月`
+      }
+
+      this.$emit('onChangeTitle', title)
+      this.hideMask(false)
+    },
+    _undoItemFilterCondition() {
+      let title = `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`
+      this.$emit('onChangeTitle', title)
+      this.$refs.childrenView.clearData()
+      this.$refs.childrenView.getRecords()
+      this.$refs.itemFilter.clearData()
+      this.hideMask(false)
+    },
+    // 若账单条目数据库的字段修改, 使用此方法同步
+    _syncDB() {
+      _recordDetail.syncField()
+        .then(res => {
+          this.toastBookS({
+            message: renderSentence(MSG_TEMPLATE.SYNC_S),
+            cb: () => { this.reload() }
+          })
         })
     }
   }
@@ -260,8 +337,11 @@ export default {
       height: @content-height;
     }
 
-    .hide-mask + * {
-      animation: drawerHide 0.3s ease-in none !important;
+    .hide-mask-right + * {
+      animation: drawerHideRight 0.3s ease-in none !important;
+    }
+    .hide-mask-left + * {
+      animation: drawerHideLeft 0.3s ease-in none !important;
     }
   }
 
@@ -270,7 +350,7 @@ export default {
     width: 300px;
     height: @content-height;
     background-color: @color-night;
-    animation: drawerShow 0.4s ease-in none;
+    animation: drawerRight 0.4s ease-in none;
     box-shadow: 0 0 20px #000;
 
     .list-title {
@@ -359,24 +439,6 @@ export default {
           border: 1px solid @color-primary !important;
         }
       }
-    }
-  }
-
-  @keyframes drawerShow {
-    0% {
-      margin-right: -360px;
-    }
-    100% {
-      margin-right: 0;
-    }
-  }
-
-  @keyframes drawerHide {
-    0% {
-      margin-right: 0;
-    }
-    100% {
-      margin-right: -360px;
     }
   }
 }

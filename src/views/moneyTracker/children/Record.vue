@@ -15,17 +15,31 @@
     <div class="view-records"
          @dblclick.stop.capture="showFeatureOptionsBar($event)">
       <Page-actions id="actions"
-                    :actions="{left: 'fas fa-filter', right: 'fas fa-times', top: 'fas fa-plus'}"
+                    :actions="{left: 'fas fa-times', right: 'fas fa-times', top: 'fas fa-plus'}"
                     @onCenterAction="_hideFeatureBar"
                     @onTopAction="_addNewItem"
                     v-show="show.comp.featureBar"></Page-actions>
 
-      <swiper :options="swiperOption">
-        <swiper-slide v-for="(v, i) in recordsByDate"
+      <swiper :options="swiperOption"
+              v-show="records.length !== 0 && !showSummary">
+        <swiper-slide v-for="(v, i) in records"
                       :key="i">
           <V-record-bar :data="v"
                         :index="i"
                         @onItemAction="_onItemAction"></V-record-bar>
+        </swiper-slide>
+      </swiper>
+      <i class="fab fa-creative-commons-nc-jp form-pos none"
+         v-show="records.length === 0 || !showSummary">没数据</i>
+      <!-- <span class="ft-xl form-pos none"
+            v-show="records.length === 0">无数据</span> -->
+      <swiper :options="swiperOption"
+              v-show="showSummary">
+        <swiper-slide v-for="(v, i) in recordsSum"
+                      :key="i">
+          <V-record-bar :data="v"
+                        :index="i"
+                        :back="__TRUTH__"></V-record-bar>
         </swiper-slide>
       </swiper>
     </div>
@@ -45,6 +59,8 @@ import AppMask from '@/components/public/mask/Mask'
 
 import { itemCategories } from '@/constants/category.ts'
 import { weekNames, dateFormat } from '@/constants/date.ts'
+import { itemFilterDesc } from '@/constants/string.ts'
+
 import { formatDate } from '@/filters/date.ts'
 import { currency } from '@/filters/number.ts'
 
@@ -72,7 +88,7 @@ export default {
       itemCategories: Object.values(itemCategories),
       feeTypes: ['支出', '收入'],
       pickDate: new Date(),
-      recordsByDate: [],
+      records: [],
       oldItem: {},
       formTitle: '',
       swiperOption: {
@@ -84,15 +100,35 @@ export default {
           featureBar: false,
           itemForm: false
         }
-      }
+      },
+      itemFilterDesc: itemFilterDesc,
+      recordsSum: []
+    }
+  },
+  computed: {
+    showSummary() {
+      return this.recordsSum.length !== 0
     }
   },
   mounted() {
     this.initData()
   },
   methods: {
+    clearData() {
+      this.records = []
+      this.recordsSum = []
+      this.show.comp.featureBar = false
+      this.show.comp.itemForm = false
+    },
     initData() {
-      _recordDetail.queryAllByNotebook(this.bookID)
+      this.getRecords()
+    },
+    getRecords(date) {
+      this.clearData()
+      const d = date ? date : new Date()
+      const year = d.getFullYear()
+      const month = d.getMonth() + 1
+      _recordDetail.queryAllByNotebook(this.bookID, { year, month })
         .then(res => {
           console.log('queryAllByNotebook', res)
           if (res.length !== 0) {
@@ -104,7 +140,7 @@ export default {
               recordDates.add(v.date)
               return v
             })
-            this.recordsByDate = Array.from(recordDates).map(v => {
+            this.records = Array.from(recordDates).map(v => {
               let data = {
                 data: [],
                 date: v,
@@ -125,11 +161,11 @@ export default {
               return data
             })
             // 按日期倒序
-            this.recordsByDate.sort((prev, next) => {
+            this.records.sort((prev, next) => {
               return new Date(next.date).getTime() - new Date(prev.date).getTime()
             })
           } else {
-            this.recordsByDate = []
+            this.records = []
           }
 
         }, err => {
@@ -162,7 +198,7 @@ export default {
       })
         .then(res => {
           console.log('_addNewItem', res)
-          this.recordsByDate = []
+          this.records = []
           this._hideInputForm()
           this.$refs.itemForm.init()
           this.initData()
@@ -215,7 +251,6 @@ export default {
         this.confirmAddNewItem(item)
       }
     },
-
     _onItemAction(data) {
       console.log('data', data)
       this.formTitle = '修改单项'
@@ -239,6 +274,53 @@ export default {
         }, err => {
           console.warn('del item', err)
         })
+    },
+    filterRecords(condition) {
+      this.getRecords(condition.values.month)
+    },
+    combineRecords(condition) {
+      this.clearData()
+      let query = {}
+      condition.values.hasOwnProperty('year') ? query.year = new Date(condition.values.year).getFullYear() : null
+      condition.values.hasOwnProperty('month') ? query.month = new Date(condition.values.month).getMonth() + 1 : null
+      _recordDetail.queryAllByNotebook(this.bookID, query)
+        .then(res => {
+          console.log('combineRecords', res)
+
+          // 合并条件下的总支出和总收入
+          const expense = res.reduce((prev, next) => {
+            return { expense: parseFloat(prev.expense) + parseFloat(next.expense) }
+          }, { expense: 0 })
+          const income = res.reduce((prev, next) => {
+            return { income: parseFloat(prev.income) + parseFloat(next.income) }
+          }, { income: 0 })
+          const all = {
+            date: '总计',
+            income: income.income,
+            expense: expense.expense,
+            data: []
+          }
+          this.recordsSum.push(all)
+
+          // 合并条件下, 各分类的支出和收入
+          let category = []
+          res.forEach(v => {
+            category.indexOf(v.category) > -1 ? null : category.push(v.category)
+          })
+          category.forEach(v => {
+            const thisCategoryRecords = res.filter(val => val.category === v)
+            const obj = {
+              date: v,
+              expense: thisCategoryRecords.reduce((prev, next) => {
+                return { expense: parseFloat(prev.expense) + parseFloat(next.expense) }
+              }, { expense: 0 }).expense,
+              income: thisCategoryRecords.reduce((prev, next) => {
+                return { income: parseFloat(prev.income) + parseFloat(next.income) }
+              }, { income: 0 }).income,
+            }
+            this.recordsSum.push(obj)
+          })
+        })
     }
   }
 }
@@ -246,9 +328,12 @@ export default {
 
 <style lang="less">
 @import (reference) '~@/assets/css/main.less';
-@router-view-height: 510px;
+@import (reference) '~@/assets/css/business/bottomComtroller.less';
+@router-view-height: @content-height - @controller-height;
 @week-bar-width: 180px;
 .view-records {
+  position: relative;
+  height: @router-view-height;
   .swiper-container {
     height: @router-view-height !important;
     background-color: @color-day;
@@ -268,5 +353,19 @@ export default {
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 20px;
+}
+
+.none {
+  color: @color-day;
+  font-size: 40px;
+
+  &::before {
+    margin-right: 20px;
+  }
+
+  &::after {
+    content: '\F4EA';
+    margin-left: 20px;
+  }
 }
 </style>

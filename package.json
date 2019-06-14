@@ -7,7 +7,9 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "commit": "git cz",
-    "code-submit": "git add . && git cz && git push"
+    "code-submit": "yarn setgit && git add . && git cz && git push && yarn unsetgit",
+    "setgit": "git config --global user.name \"cycleyzc\" && git config --global user.email \"cycle900802@gmail.com\"",
+    "unsetgit": "git config --global --unset user.name && git config --global user.email --unset"
   },
   "dependencies": {
     "core-js": "^2.6.5",
@@ -54,10 +56,7 @@
     "env": {
       "node": true
     },
-    "extends": [
-      "plugin:vue/essential",
-      "@vue/standard"
-    ],
+    "extends": ["plugin:vue/essential", "@vue/standard"],
     "rules": {},
     "parserOptions": {
       "parser": "babel-eslint"
@@ -68,19 +67,12 @@
       "autoprefixer": {}
     }
   },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
-  ],
+  "browserslist": ["> 1%", "last 2 versions", "not ie <= 8"],
   "gitHooks": {
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
-    "*.{js,vue}": [
-      "vue-cli-service lint",
-      "git add"
-    ]
+    "*.{js,vue}": ["vue-cli-service lint", "git add"]
   },
   "config": {
     "commitizen": {
