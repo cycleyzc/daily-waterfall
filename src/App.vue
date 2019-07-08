@@ -24,6 +24,8 @@ export default {
 }
 </script>
 
+<style src="izitoast/dist/css/iziToast.css"></style>
+<style src="element-ui/lib/theme-chalk/index.css"></style>
 
 <style lang="less">
 @import './assets/css/main.less';

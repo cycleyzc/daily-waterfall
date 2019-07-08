@@ -4,19 +4,23 @@
     <div class="fieldset">
       <label for="book_type"
              class="fieldset-label">类型: </label>
-      <v-select v-model="selectedOption"
-                :options="bookTypes"
-                :class="['fieldset-value', error.type ? 'bd-error': '']"
-                placeholder="选一个"
-                id="book_type"></v-select>
+      <el-select v-model="selectedOption"
+                 :class="['fieldset-value', error.type ? 'bd-error': '']"
+                 placeholder="选一个"
+                 :clearable="__TRUTH__"
+                 id="book_type">
+        <el-option v-for="(v, i) in bookTypes"
+                   :key="i"
+                   :value="v"></el-option>
+      </el-select>
     </div>
     <div class="fieldset">
       <label for="book_name"
              class="fieldset-label">名称:</label>
-      <input type="text"
-             placeholder="输入名称"
-             :class="['ft-m', 'fieldset-value', error.name ? 'bd-error': '']"
-             v-model="typedName">
+      <el-input placeholder="输入名称"
+                :class="['ft-m', 'fieldset-value', error.name ? 'bd-error': '']"
+                :clearable="__TRUTH__"
+                v-model="typedName"></el-input>
     </div>
     <div class="form-action">
       <i class="fas fa-times-circle like-btn"
@@ -124,7 +128,7 @@ export default {
     input[type='text'] {
       height: 36px;
       border: 1px solid #bbb;
-      text-indent: 1em;
+      // text-indent: 1em;
       border-radius: 5px;
     }
     .dropdown {

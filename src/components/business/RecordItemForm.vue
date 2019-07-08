@@ -4,43 +4,59 @@
     <div class="fieldset"
          category>
       <label>分类: </label>
-      <v-select v-model="selectedCategory"
-                :options="categories"
-                :class="['field', 'field-select-category', showError.category ? 'bd-error': '']"></v-select>
+      <el-select v-model="selectedCategory"
+                 :class="['field', 'field-select-category', showError.category ? 'bd-error': '']"
+                 :clearable="__TRUTH__">
+        <el-option v-for="(v, i) in categories"
+                   :key="i"
+                   :value="v"></el-option>
+      </el-select>
     </div>
     <div class="fieldset"
          fee-type>
       <label>收支: </label>
-      <v-select v-model="selectedFeeType"
-                :options="feeTypes"
-                :class="['field', 'field-select-fee', showError.feeType ? 'bd-error': '']"></v-select>
+      <el-select v-model="selectedFeeType"
+                 :class="['field', 'field-select-fee', showError.feeType ? 'bd-error': '']"
+                 :clearable="__TRUTH__">
+        <el-option v-for="(v, i) in feeTypes"
+                   :key="i"
+                   :value="v"></el-option>
+      </el-select>
     </div>
     <div class="fieldset"
          date>
       <label>日期: </label>
-      <v-date-picker type="date"
-                     v-model="selectedDate"
-                     :class="[showError.date ? 'bd-error': '']"></v-date-picker>
+      <el-date-picker type="date"
+                      :clearable="__TRUTH__"
+                      v-model="selectedDate"
+                      :class="[showError.date ? 'bd-error': '']"></el-date-picker>
     </div>
     <div class="fieldset"
          amount>
       <label>金额: </label>
-      <div :class="['mx-input-wrapper', showError.amount ? 'bd-error': '']">
-        <input type="number"
+      <div :class="['input-wrapper', showError.amount ? 'bd-error': '']">
+        <!-- <input type="number"
                v-model="amount"
                class="mx-input"
-               placeholder="金额" />
+               placeholder="金额" /> -->
+        <el-input-number v-model="amount"
+                         placeholder="金额"
+                         :clearable="__TRUTH__"></el-input-number>
       </div>
     </div>
     <div class="fieldset"
          note>
       <label>备注: </label>
-      <div class="mx-input-wrapper">
-        <input type="text"
+      <div class="input-wrapper">
+        <!-- <input type="text"
                v-model="note"
                class="mx-input"
                placeholder="备注, 最多15字"
-               maxlength="15" />
+               maxlength="15" /> -->
+        <el-input v-model="note"
+                  placeholder="备注, 最多15字"
+                  maxlength="15"
+                  :clearable="__TRUTH__"></el-input>
       </div>
     </div>
     <div class="action-container">
@@ -175,6 +191,12 @@ export default {
       &:last-child {
         flex: 3;
         background-color: #fff;
+      }
+    }
+
+    .input-wrapper {
+      & > div {
+        width: 100%;
       }
     }
   }

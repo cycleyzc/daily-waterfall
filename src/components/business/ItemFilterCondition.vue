@@ -1,6 +1,7 @@
 <template>
   <div class="comp-book-item-filter-container">
-    <div class="filter-form">
+    <div class="filter-form"
+         v-if="showNumericOptions">
       <div class="fieldset">
         <label :class="['far','fa-dot-circle','icon-filter-radio', filterOptions.combine.selected ? 'selected' : '']"
                v-show="filterOptions.combine.selected"
@@ -12,20 +13,20 @@
           <p class="ft-xl title">{{filterOptions.combine.title}}</p>
           <div class="options-container">
             <div class="combine-year-container">
-              <v-date-picker type="year"
-                             placeholder="按年份合并数据显示"
-                             format="YYYY"
-                             v-model="selectedOption.combine.year"
-                             :append-to-body="__TRUTH__"
-                             :class="['combine-year']"></v-date-picker>
+              <el-date-picker type="year"
+                              placeholder="按年份合并数据显示"
+                              format="yyyy"
+                              v-model="selectedOption.combine.year"
+                              :clearable="__TRUTH__"
+                              :class="['combine-year']"></el-date-picker>
             </div>
             <div class="combine-month-container">
-              <v-date-picker type="month"
-                             placeholder="按月份合并数据显示"
-                             format="YYYY-MM"
-                             v-model="selectedOption.combine.month"
-                             :append-to-body="__TRUTH__"
-                             :class="['combine-month']"></v-date-picker>
+              <el-date-picker type="month"
+                              placeholder="按月份合并数据显示"
+                              format="yyyy-MM"
+                              v-model="selectedOption.combine.month"
+                              :clearable="__TRUTH__"
+                              :class="['combine-month']"></el-date-picker>
             </div>
           </div>
         </section>
@@ -41,15 +42,26 @@
           <p class="ft-xl title">{{filterOptions.filter.title}}</p>
           <div class="options-container">
             <div class="filter-month-container">
-              <v-date-picker type="month"
-                             placeholder="选择月份"
-                             format="YYYY-MM"
-                             v-model="selectedOption.filter.month"
-                             :append-to-body="__TRUTH__"
-                             :class="['filter-month']"></v-date-picker>
+              <el-date-picker type="month"
+                              placeholder="选择月份"
+                              format="yyyy-MM"
+                              v-model="selectedOption.filter.month"
+                              :clearable="__TRUTH__"
+                              :class="['filter-month']"></el-date-picker>
             </div>
           </div>
         </section>
+      </div>
+    </div>
+    <div class="filter-form"
+         v-if="showChartOptions">
+      <div class="fieldset">
+        <label :class="['far','fa-dot-circle','icon-filter-radio', filterOptions.filter.selected ? 'selected' : '']"
+               v-show="filterOptions.filter.selected"
+               @click="selectFilterType(filterOptions.filter)"></label>
+        <label class="far fa-circle icon-filter-radio"
+               v-show="!filterOptions.filter.selected"
+               @click="selectFilterType(filterOptions.filter)"></label>
       </div>
     </div>
     <div class="btn-container">
@@ -80,6 +92,21 @@ export default {
           values: {}
         }
       }
+    },
+    // ['numeric', 'chart']
+    filterType: {
+      type: String,
+      default() {
+        return 'numeric'
+      }
+    }
+  },
+  computed: {
+    showNumericOptions() {
+      return this.filterType === 'numeric'
+    },
+    showChartOptions() {
+      return this.filterType === 'chart'
     }
   },
   data() {

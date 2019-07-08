@@ -19,6 +19,7 @@ interface QueryCon {
   parentID: string
   year?: any
   month?: any
+  category?: string
   [key: string]: any
 }
 
@@ -76,12 +77,20 @@ class RecordDetail extends Dexie {
    * 根据账本id查询所有条目
    * @param parentID 账本id
    * @param date 日期对象, exp: {year: '', month: ''}
+   * @param other 条件对象, exp: {category: '早餐'}
    */
-  public async queryAllByNotebook (parentID: number, date?: any): Promise<any> {
+  public async queryAllByNotebook (
+    parentID: number,
+    date?: any,
+    other?: any
+  ): Promise<any> {
     let query: QueryCon = { parentID: '' }
     query.parentID = String(parentID)
-    date.hasOwnProperty('year') ? (query.year = date.year) : null
-    date.hasOwnProperty('month') ? (query.month = date.month) : null
+    date && date.hasOwnProperty('year') ? (query.year = date.year) : null
+    date && date.hasOwnProperty('month') ? (query.month = date.month) : null
+    other && other.hasOwnProperty('category')
+      ? (query.category = other.category)
+      : null
     const data = await this.recordDetail.where(query).toArray()
     return data
   }

@@ -102,7 +102,8 @@ export default {
         }
       },
       itemFilterDesc: itemFilterDesc,
-      recordsSum: []
+      recordsSum: [],
+      selectedConditionDate: new Date()
     }
   },
   computed: {
@@ -201,7 +202,7 @@ export default {
           this.records = []
           this._hideInputForm()
           this.$refs.itemForm.init()
-          this.initData()
+          this.getRecords(this.selectedConditionDate)
           this.$parent.getBooks()
         }, err => {
           console.warn('_addNewItem', err)
@@ -214,8 +215,16 @@ export default {
       })
       console.log('diff', diff, id, item)
       if (diff.hasOwnProperty('amount')) {
-        item.feeType === '收入' ? diff.income = item.amount : null
-        item.feeType === '支出' ? diff.expense = item.amount : null
+        switch (item.feeType) {
+          case '收入':
+            diff.income = item.amount
+            diff.expense = 0
+            break
+          case '支出':
+            diff.expense = item.amount
+            diff.income = 0
+            break
+        }
         delete diff.amount
       }
       if (diff.hasOwnProperty('date')) {
@@ -276,13 +285,20 @@ export default {
         })
     },
     filterRecords(condition) {
+      this.selectedConditionDate = condition.values.month
       this.getRecords(condition.values.month)
     },
     combineRecords(condition) {
       this.clearData()
       let query = {}
-      condition.values.hasOwnProperty('year') ? query.year = new Date(condition.values.year).getFullYear() : null
-      condition.values.hasOwnProperty('month') ? query.month = new Date(condition.values.month).getMonth() + 1 : null
+      if (condition.values.hasOwnProperty('year')) {
+        this.selectedConditionDate = condition.values.year
+        query.year = new Date(condition.values.year).getFullYear()
+      }
+      if (condition.values.hasOwnProperty('month')) {
+        this.selectedConditionDate = condition.values.month
+        query.month = new Date(condition.values.month).getMonth() + 1
+      }
       _recordDetail.queryAllByNotebook(this.bookID, query)
         .then(res => {
           console.log('combineRecords', res)

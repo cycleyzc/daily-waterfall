@@ -33,7 +33,8 @@ export default new Router({
         {
           path: 'mt-chart/:bookID',
           name: 'mt-chart',
-          component: MoneyTrackerChart
+          component: MoneyTrackerChart,
+          props: true
         }
       ]
     }

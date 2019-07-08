@@ -21,3 +21,4 @@
 2. vue-router
 3. less
 4. dexie (indexedDB 存储)
+5. vue-chartjs (图标处理)

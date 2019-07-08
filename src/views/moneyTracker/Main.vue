@@ -98,15 +98,14 @@ export default {
       compVisibility: {
         bookList: false,
         bookInfoForm: false,
-        itemFilter: false
+        itemFilter: false,
+        chartFilter: false
       },
       hideAnimationLeft: '',
       hideAnimationRight: '',
       selectedBookID: localStorage.getItem('NOTEBOOK_ID') || -1,
       oldBook: {},
-      oldFilterCon: {
-
-      },
+      oldFilterCon: {},
       itemCategories: Object.values(itemCategories),
       itemFilterDesc: itemFilterDesc
     }
@@ -213,8 +212,13 @@ export default {
     toggleBookForm(bool = false) {
       this.compVisibility.bookInfoForm = bool
     },
+    resetDefaultTitle() {
+      let title = `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`
+      this.$emit('onChangeTitle', title)
+    },
     // 切换视图
     _toggleRoute(type) {
+      this.resetDefaultTitle()
       switch (String(type)) {
         case 'record':
           this.controllerVisibility.mainIcon = false
@@ -225,6 +229,7 @@ export default {
           })
           break
         case 'chart':
+          this.$emit('onChangeTitle', '')
           this.controllerVisibility.mainIcon = false
           this.controllerVisibility.recordIcon = false
           this.controllerVisibility.chartIcon = true
@@ -261,7 +266,17 @@ export default {
         })
     },
     _toggleFilterOptions(bool) {
-      this.compVisibility.itemFilter = bool
+      switch (this.$route.name) {
+        case 'mt-record':
+          this.compVisibility.itemFilter = bool
+          this.compVisibility.chartFilter = false
+          break
+        case 'mt-chart':
+          this.compVisibility.chartFilter = bool
+          this.compVisibility.itemFilter = false
+          break
+      }
+
     },
     _confirmItemFilterCondition(condition) {
       this.oldFilterCon = condition
